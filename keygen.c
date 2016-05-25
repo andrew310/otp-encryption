@@ -15,7 +15,6 @@ int modulo(int a, int b){
     return (a % b + b) % b;
 }
 
-
 int main(int argc, char const *argv[]) {
     if (argc < 2) {
         printf("Usage: <keygen> <number> %s\n", argv[0]);
@@ -25,9 +24,9 @@ int main(int argc, char const *argv[]) {
     char key[length + 1];
     char randChar;
 
-    srang(time(NULL));
+    srand(time(NULL));
 
-    length - atoi(argv[1]);
+    length = atoi(argv[1]);
 
     int i;
     for (i = 0; i < length; i++) {
