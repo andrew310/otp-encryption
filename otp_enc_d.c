@@ -61,6 +61,10 @@ int main(int argc, char *argv[])
     tv.tv_sec = 0;
     tv.tv_usec = 100000;
 
+    //file to temporarily store stuff
+    FILE *fp;
+
+    fp = fopen("temp", "w+");
     //loop to accept incoming messages
      while (1) {
          bzero(buffer,1024);
@@ -70,15 +74,16 @@ int main(int argc, char *argv[])
          } else if (rv == 0) {
              break;
          } else {
-             // one or both of the descriptors have data
+             // if there is data to be read
              if (FD_ISSET(newsockfd, &readfds)) {
                  recv(newsockfd, buffer, 1024, 0);
-                 printf(buffer);
+                 fputs(buffer, fp);
              }
          }
      }
+     fclose(fp);
      bzero(buffer,1024);
-     printf("Here is the message: %s\n",buffer);
+     //:q!printf("Here is the message: %s\n",buffer);
      n = write(newsockfd,"I got your message",18);
      if (n < 0) error("ERROR writing to socket");
      close(newsockfd);
