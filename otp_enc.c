@@ -59,7 +59,7 @@ int main(int argc, char *argv[])
     //n = write(sockfd,buffer,strlen(buffer));
     // if (n < 0)
     //      error("ERROR writing to socket");
-    // bzero(buffer,MAX_BUFFER);
+    bzero(buffer,MAX_BUFFER);
     n = read(sockfd,buffer,MAX_BUFFER);
     if (n < 0)
          error("ERROR reading from socket");
