@@ -56,10 +56,10 @@ int main(int argc, char *argv[])
     //READ INPUT FILE
     //fgets(buffer,MAX_BUFFER,stdin);
     send_file(argv, sockfd);
-    n = write(sockfd,buffer,strlen(buffer));
-    if (n < 0)
-         error("ERROR writing to socket");
-    bzero(buffer,MAX_BUFFER);
+    //n = write(sockfd,buffer,strlen(buffer));
+    // if (n < 0)
+    //      error("ERROR writing to socket");
+    // bzero(buffer,MAX_BUFFER);
     n = read(sockfd,buffer,MAX_BUFFER);
     if (n < 0)
          error("ERROR reading from socket");
@@ -84,12 +84,11 @@ void send_file(char** args, int connectionFd){
         printf("sending the goods...\n");
         size_t nbytes = 0;
         //send the file 500 bytes at a time
-        while ((nbytes = fread(ret, sizeof(ret[0]), 500, fl)) > 0) {
-            //send(sockfd, ret, nbytes, 0);
+        while ((nbytes = fread(ret, sizeof(ret[0]), MAX_BUFFER, fl)) > 0) {
+        send(connectionFd, ret, nbytes, 0);
         printf(ret);
         }
         fclose(fl);
         printf("done sending the goods\n");
-
     }
 }
