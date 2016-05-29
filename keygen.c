@@ -12,30 +12,34 @@
  * ref2: http://stackoverflow.com/questions/14997165/fastest-way-to-get-a-positive-modulo-in-c-c
  */
 int modulo(int a, int b){
-    return (a % b + b) % b;
+    int mod = a % b;
+    if (mod < 0) {
+      mod = mod + b;
+    }
+    return mod;
 }
 
 int main(int argc, char const *argv[]) {
+
     if (argc < 2) {
         printf("Usage: <keygen> <number> %s\n", argv[0]);
+        exit(1);
     }
 
-    int length;
-    char key[length + 1];
-    char randChar;
-
     srand(time(NULL));
-
-    length = atoi(argv[1]);
+    int length = atoi(argv[1]);
+    char key[length];
+    char randChar;
 
     int i;
     for (i = 0; i < length; i++) {
-        randChar = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"[modulo(rand(), 26)];
+        randChar = " ABCDEFGHIJKLMNOPQRSTUVWXYZ"[modulo(random(), 27)];
         key[i] = randChar;
     }
     //place null terminator at end so it is a true string
     key[length] = '\0';
 
+    //print key to screen
     printf("%s\n", key);
 
     return 0;
