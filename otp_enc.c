@@ -15,7 +15,7 @@ void error(const char *msg)
     exit(0);
 }
 
-void send_file(char** args, int connectionFd);
+void send_file(char* filename, int connectionFd);
 
 int main(int argc, char *argv[])
 {
@@ -50,12 +50,43 @@ int main(int argc, char *argv[])
     serv_addr.sin_port = htons(portno);
     if (connect(sockfd,(struct sockaddr *) &serv_addr,sizeof(serv_addr)) < 0)
         error("ERROR connecting");
-    printf("Please enter the message: ");
-    //bzero(buffer,256);
+
+    //open keyfile and get its length
+    FILE *fl = fopen(argv[2], "r");
+    fseek(fl, 0, SEEK_END);
+    long len = ftell(fl);
+    fseek(fl, 0, SEEK_SET);
+    fclose(fl);
+
+    //open plaintext and get its length
+    FILE *fp;
+    fp = fopen(argv[1], "r");
+    fseek(fp, 0, SEEK_END);
+    long len2 = ftell(fl);
+    fseek(fp, 0, SEEK_SET);
+
+    //compare two lengths
+    if (len2 > len) {
+      printf("ERROR, key is too short\n");
+      exit(1);
+    }
+
+    char ch = getc(fp);
+    //error checking
+    while (ch != EOF) {
+      if (!isupper(ch) && !isspace(ch)) {
+          printf("ERROR: bad char %c\n", ch);
+          exit(1);
+      }
+
+      ch = getc(fp);
+    }
+
+    fclose(fp);
 
     //READ INPUT FILE
     //fgets(buffer,MAX_BUFFER,stdin);
-    send_file(argv, sockfd);
+    send_file(argv[1], sockfd);
     //n = write(sockfd,buffer,strlen(buffer));
     // if (n < 0)
     //      error("ERROR writing to socket");
@@ -68,15 +99,14 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-void send_file(char** args, int connectionFd){
-    printf("opening file: %s\n", args[1]);
-    char* filename = args[1];
+void send_file(char* filename, int connectionFd){
+    printf("opening file: %s\n", filename);
     FILE *fl = fopen(filename, "r");
     if (fl == NULL) {
-        fprintf(stderr,"Error opening '%s': No such file or directory\n", args[1]);
+        fprintf(stderr,"Error opening '%s': No such file or directory\n", filename);
         exit(1);
     } else {
-        printf("opened %s successfully, reading...\n", args[1]);
+        printf("opened %s successfully, reading...\n", filename);
         fseek(fl, 0, SEEK_END);
         long len = ftell(fl);
         char *ret = (char*)malloc(len);
