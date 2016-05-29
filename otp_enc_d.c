@@ -17,16 +17,6 @@ void error(const char *msg)
 
 char* getFile(int connection){
     char buffer[1024];
-    int rv;
-    fd_set readfds;
-    struct timeval tv;
-
-    //clear the file descriptors
-    FD_ZERO(&readfds);
-    //add our sockfd to the fd set
-    FD_SET(connection, &readfds);
-    tv.tv_sec = 0;
-    tv.tv_usec = 100000;
 
     //file to temporarily store stuff
     FILE *fp;
@@ -36,22 +26,17 @@ char* getFile(int connection){
     char *name = "temp_plaintext";
     int pid = getpid();
     snprintf(tempname, size, "%s%d", name, pid);
-    fp = fopen(tempname, "w+");
+    fp = fopen(tempname, "a");
     //loop to accept incoming messages
-    while (1) {
-       bzero(buffer,1024);
-       rv = select(connection+1, &readfds, NULL, NULL, &tv);
-       if (rv == -1) {
-           perror("select"); // error occurred in select()
-       } else if (rv == 0) {
-           break;
-       } else {
-           // if there is data to be read
-           if (FD_ISSET(connection, &readfds)) {
-               recv(connection, buffer, 1024, 0);
-               fputs(buffer, fp);
-           }
-       }
+    int numbytes = 0;
+    while ((numbytes = recv(connection, buffer, 1024, 0)) > 0) {
+        printf("%s\n", buffer);
+        fwrite(buffer,sizeof(char), numbytes, fp);
+        bzero(buffer, 1024);
+        //if less than 1024 we are on the last chunk, so break
+        if (numbytes < 1024) {
+          break;
+        }
     }
     fclose(fp);
     return tempname;
