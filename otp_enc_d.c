@@ -15,42 +15,17 @@ void error(const char *msg)
     exit(1);
 }
 
-char* getFile(int connection){
-    char buffer[1024];
+void handleIncoming(int connection);
 
-    //file to temporarily store stuff
-    FILE *fp;
-    //will use for temporary file
-    int size = 20;
-    char *tempname = malloc(size);
-    char *name = "temp_plaintext";
-    int pid = getpid();
-    snprintf(tempname, size, "%s%d", name, pid);
-    fp = fopen(tempname, "a");
-    //loop to accept incoming messages
-    int numbytes = 0;
-    while ((numbytes = recv(connection, buffer, 1024, 0)) > 0) {
-        printf("%s\n", buffer);
-        fwrite(buffer,sizeof(char), numbytes, fp);
-        bzero(buffer, 1024);
-        //if less than 1024 we are on the last chunk, so break
-        if (numbytes < 1024) {
-          break;
-        }
-    }
-    fclose(fp);
-    return tempname;
-}
+char* getFile(int connection, char* name);
 
 
 int main(int argc, char *argv[])
 {
     int sockfd, newsockfd, portno;
     socklen_t clilen;
-    char buffer[1024];
-    char *plaintext;
     struct sockaddr_in serv_addr, cli_addr;
-    int n;
+    int pid;
     int yes = 1;
 
     if (argc < 2) {
@@ -75,15 +50,25 @@ int main(int argc, char *argv[])
     if (bind(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0)
         error("ERROR on binding");
 
-    listen(sockfd,5);
+    //listen for up to 5 incoming connection
+    listen(sockfd, 5);
     clilen = sizeof(cli_addr);
 
-    newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
-    if (newsockfd < 0)
-        error("ERROR on accept");
+    //fork off child processes for incoming connections
+    while (1) {
+        newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
+        if (newsockfd < 0)
+            error("ERROR on accept");
 
+        if (!fork()) {
+            //child doens't need the listener
+            close(sockfd);
+            //receive incoming files and store filenames
+            handleIncoming(newsockfd);
+            exit(0);
+        }
+    }
 
-    plaintext = getFile(newsockfd);
 
     // FILE *fp;
     // fp = fopen(plaintext, "r");
@@ -95,12 +80,46 @@ int main(int argc, char *argv[])
     //   }
     // }
 
-
-    bzero(buffer,1024);
-    //:q!printf("Here is the message: %s\n",buffer);
-    n = write(newsockfd,"I got your message",18);
-    if (n < 0) error("ERROR writing to socket");
-    close(newsockfd);
-    close(sockfd);
     return 0;
+}
+
+
+void handleIncoming(int connection){
+
+    char *plaintext, *ciphertext;
+    //char buffer[1024];
+    int n;
+
+    plaintext = getFile(connection, "temp_plaintext");
+    //bzero(buffer,1024);
+    n = write(connection,"confirmed",18);
+    if (n < 0) error("ERROR writing to socket");
+    ciphertext = getFile(connection, "temp_ciphertext");
+    close(connection);
+}
+
+char* getFile(int connection, char* name){
+    char buffer[1024];
+
+    //file to temporarily store stuff
+    FILE *fp;
+    //will use for temporary file
+    int size = 22;
+    char *tempname = malloc(size);
+    int pid = getpid();
+    snprintf(tempname, size, "%s%d", name, pid);
+    fp = fopen(tempname, "a");
+    //loop to accept incoming messages
+    int numbytes = 0;
+    while ((numbytes = recv(connection, buffer, 1024, 0)) > 0) {
+        printf("%s\n", buffer);
+        fwrite(buffer,sizeof(char), numbytes, fp);
+        bzero(buffer, 1024);
+        //if less than 1024 we are on the last chunk, so break
+        if (numbytes < 1024) {
+          break;
+        }
+    }
+    fclose(fp);
+    return tempname;
 }
