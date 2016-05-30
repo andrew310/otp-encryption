@@ -16,8 +16,9 @@ void error(const char *msg)
 }
 
 void handleIncoming(int connection);
-
+char* encode(int connection, char *plainfile, char *cipherfile);
 char* getFile(int connection, char* name);
+void send_file(char* filename, int connectionFd);
 
 
 int main(int argc, char *argv[])
@@ -69,33 +70,96 @@ int main(int argc, char *argv[])
         }
     }
 
-
-    // FILE *fp;
-    // fp = fopen(plaintext, "r");
-    // char ch;
-    //
-    // while ((ch = getc(fp)) != EOF) {
-    //   if (!isupper(ch) && ch != ' ') {
-    //     printf("found a bad character");
-    //   }
-    // }
-
     return 0;
 }
 
 
 void handleIncoming(int connection){
 
-    char *plaintext, *ciphertext;
+    char *plaintext, *ciphertext, *enciphered;
     //char buffer[1024];
     int n;
 
+    //first call to getFile stores plaintext in a temp file
     plaintext = getFile(connection, "temp_plaintext");
-    //bzero(buffer,1024);
+    //let client know we got the file
     n = write(connection,"confirmed",18);
     if (n < 0) error("ERROR writing to socket");
+    //second call to getFile stores the ciphertext
     ciphertext = getFile(connection, "temp_ciphertext");
-    close(connection);
+
+    //call encode and pass it the new tempfiles and the connection
+    enciphered = encode(connection, plaintext, ciphertext);
+
+    send_file(enciphered, connection);
+
+    close(connection); //no longer need this
+
+    //*clean up*
+    remove(plaintext);
+    remove(ciphertext);
+    remove(enciphered);
+
+}
+
+
+char* encode(int connection, char *plainfile, char *cipherfile){
+    FILE *fp;
+    fp = fopen(plainfile, "r");
+    char ch;
+
+    FILE *fl;
+    fl = fopen(cipherfile, "r");
+    char ch2;
+
+    //set up one last file to hold the enciphered text
+    FILE *temp;
+    int size = 22;
+    char *tempname = malloc(size);
+    int pid = getpid();
+    snprintf(tempname, size, "%s%d", "enciphered", pid);
+    temp = fopen(tempname, "a");
+    char ch3;
+
+    //start with first chars from both files
+    ch = getc(fp);
+    ch2 = getc(fl);
+    ch3 = getc(temp);
+
+    char alpha[27];
+    sprintf(alpha, "ABCDEFGHIJKLMNOPQRSTUVWXYZ ");
+    int i;
+    //we don't really need to check for ch2 end of file since key should be longer
+    while (ch != EOF) {
+        //get the index of the current ch
+        int msgkey = 0;
+        for (i = 0; i < 27; i++) {
+            if (ch == alpha[i]) {
+                msgkey = msgkey + i;
+            }
+            if (ch2 == alpha[i]) {
+                msgkey = msgkey + i;
+            }
+        }//end of for loop
+        //perform modulo
+        int r = msgkey % 27;
+        if (r > 27) {
+          r = r - 27;
+        }
+        //printf("%c\n", alpha[r]);
+        fputc(alpha[r], temp);
+
+        //move the chain
+        ch = getc(fp);
+        ch2 = getc(fl);
+        ch3 = getc(temp);
+    }
+
+    fclose(fp);
+    fclose(fl);
+    fclose(temp);
+
+    return tempname;
 }
 
 char* getFile(int connection, char* name){
@@ -112,7 +176,7 @@ char* getFile(int connection, char* name){
     //loop to accept incoming messages
     int numbytes = 0;
     while ((numbytes = recv(connection, buffer, 1024, 0)) > 0) {
-        printf("%s\n", buffer);
+        //printf("%s\n", buffer);
         fwrite(buffer,sizeof(char), numbytes, fp);
         bzero(buffer, 1024);
         //if less than 1024 we are on the last chunk, so break
@@ -122,4 +186,28 @@ char* getFile(int connection, char* name){
     }
     fclose(fp);
     return tempname;
+}
+
+void send_file(char* filename, int connectionFd){
+    //printf("opening file: %s\n", filename);
+    FILE *fl = fopen(filename, "r");
+    if (fl == NULL) {
+        fprintf(stderr,"Error opening '%s': No such file or directory\n", filename);
+        exit(1);
+    } else {
+        //printf("opened %s successfully, reading...\n", filename);
+        fseek(fl, 0, SEEK_END);
+        long len = ftell(fl);
+        char *ret = (char*)malloc(len);
+        fseek(fl, 0, SEEK_SET);
+        //printf("sending the goods...\n");
+        size_t nbytes = 0;
+        //send the file 500 bytes at a time
+        while ((nbytes = fread(ret, sizeof(ret[0]), 1024, fl)) > 0) {
+        send(connectionFd, ret, nbytes, 0);
+        //printf(ret);
+        }
+        fclose(fl);
+        //printf("done sending the goods\n");
+    }
 }
