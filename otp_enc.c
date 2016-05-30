@@ -71,8 +71,8 @@ int main(int argc, char *argv[])
       exit(1);
     }
 
-    char ch = getc(fp);
     //error checking
+    char ch = getc(fp);
     while (ch != EOF) {
       if (!isupper(ch) && !isspace(ch)) {
           printf("ERROR: bad char %c\n", ch);
@@ -81,21 +81,28 @@ int main(int argc, char *argv[])
 
       ch = getc(fp);
     }
-
     fclose(fp);
 
-    //READ INPUT FILE
-    //fgets(buffer,MAX_BUFFER,stdin);
+    //send both files in succession
     send_file(argv[1], sockfd);
-    //n = write(sockfd,buffer,strlen(buffer));
-    // if (n < 0)
-    //      error("ERROR writing to socket");
     bzero(buffer,MAX_BUFFER);
     n = read(sockfd,buffer,MAX_BUFFER);
     if (n < 0)
          error("ERROR reading from socket");
     printf("%s\n",buffer);
+
+
+    //CIPHER FILE
+    send_file(argv[2], sockfd);
+    bzero(buffer,MAX_BUFFER);
+    n = read(sockfd,buffer,MAX_BUFFER);
+    if (n < 0)
+         error("ERROR reading from socket");
+    printf("%s\n",buffer);
+
     close(sockfd);
+
+
     return 0;
 }
 
