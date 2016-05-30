@@ -83,49 +83,52 @@ int main(int argc, char *argv[])
     }
     fclose(fp);
 
-    //send both files in succession
+    //SEND PLAINTEXT FILE
     send_file(argv[1], sockfd);
     bzero(buffer,MAX_BUFFER);
     n = read(sockfd,buffer,MAX_BUFFER);
     if (n < 0)
          error("ERROR reading from socket");
-    printf("%s\n",buffer);
+    //printf("%s\n",buffer);
 
 
-    //CIPHER FILE
+    //SEND CIPHER FILE
     send_file(argv[2], sockfd);
     bzero(buffer,MAX_BUFFER);
-    n = read(sockfd,buffer,MAX_BUFFER);
-    if (n < 0)
-         error("ERROR reading from socket");
-    printf("%s\n",buffer);
-
-    close(sockfd);
-
+    int numbytes = 0;
+    //loop to print out enciphered text in case it is a big one
+    while ((numbytes = recv(sockfd, buffer, 1024, 0)) > 0) {
+        printf("%s", buffer);
+        bzero(buffer, 1024);
+        //if less than 1024 we are on the last chunk, so break
+        if (numbytes < 1024) {
+          break;
+        }
+    }
 
     return 0;
 }
 
 void send_file(char* filename, int connectionFd){
-    printf("opening file: %s\n", filename);
+    //printf("opening file: %s\n", filename);
     FILE *fl = fopen(filename, "r");
     if (fl == NULL) {
         fprintf(stderr,"Error opening '%s': No such file or directory\n", filename);
         exit(1);
     } else {
-        printf("opened %s successfully, reading...\n", filename);
+        //printf("opened %s successfully, reading...\n", filename);
         fseek(fl, 0, SEEK_END);
         long len = ftell(fl);
         char *ret = (char*)malloc(len);
         fseek(fl, 0, SEEK_SET);
-        printf("sending the goods...\n");
+        //printf("sending the goods...\n");
         size_t nbytes = 0;
         //send the file 500 bytes at a time
         while ((nbytes = fread(ret, sizeof(ret[0]), MAX_BUFFER, fl)) > 0) {
         send(connectionFd, ret, nbytes, 0);
-        printf(ret);
+        //printf(ret);
         }
         fclose(fl);
-        printf("done sending the goods\n");
+        //printf("done sending the goods\n");
     }
 }
