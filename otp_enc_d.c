@@ -76,20 +76,23 @@ int main(int argc, char *argv[])
 
 void handleIncoming(int connection){
 
-    char *plaintext, *ciphertext, *enciphered;
+    //identify yourself!!
+    write(connection, "enc", 3);
+
+    char *plaintext, *keytext, *enciphered;
     //char buffer[1024];
     int n;
 
     //first call to getFile stores plaintext in a temp file
     plaintext = getFile(connection, "temp_plaintext");
     //let client know we got the file
-    n = write(connection,"confirmed",18);
+    n = write(connection,"confirmed", 9);
     if (n < 0) error("ERROR writing to socket");
-    //second call to getFile stores the ciphertext
-    ciphertext = getFile(connection, "temp_ciphertext");
+    //second call to getFile stores the keytext
+    keytext = getFile(connection, "temp_keytext");
 
     //call encode and pass it the new tempfiles and the connection
-    enciphered = encode(connection, plaintext, ciphertext);
+    enciphered = encode(connection, plaintext, keytext);
 
     send_file(enciphered, connection);
 
@@ -97,7 +100,7 @@ void handleIncoming(int connection){
 
     //*clean up*
     remove(plaintext);
-    remove(ciphertext);
+    remove(keytext);
     remove(enciphered);
 
 }
@@ -135,10 +138,10 @@ char* encode(int connection, char *plainfile, char *cipherfile){
         int msgkey = 0;
         for (i = 0; i < 27; i++) {
             if (ch == alpha[i]) {
-                msgkey = msgkey + i;
+                msgkey = msgkey + i + 1;
             }
             if (ch2 == alpha[i]) {
-                msgkey = msgkey + i;
+                msgkey = msgkey + i + 1;
             }
         }//end of for loop
         //perform modulo

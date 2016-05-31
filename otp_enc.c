@@ -83,6 +83,16 @@ int main(int argc, char *argv[])
     }
     fclose(fp);
 
+    n = read(sockfd,buffer,MAX_BUFFER);
+    if (n < 0)
+         error("ERROR reading from socket");
+    //printf("%s\n",buffer);
+    if (strncmp(buffer, "enc", 4) != 0) {
+        printf("Only use otp_enc with otp_enc_d \n");
+        close(sockfd);
+        exit(0);
+    }
+
     //SEND PLAINTEXT FILE
     send_file(argv[1], sockfd);
     bzero(buffer,MAX_BUFFER);
