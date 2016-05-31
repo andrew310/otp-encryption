@@ -75,7 +75,7 @@ int main(int argc, char *argv[])
     char ch = getc(fp);
     while (ch != EOF) {
       if (!isupper(ch) && !isspace(ch)) {
-          printf("ERROR: bad char %c\n", ch);
+          fprintf(stderr, "ERROR: bad char %c\n", ch);
           exit(1);
       }
 
@@ -87,7 +87,7 @@ int main(int argc, char *argv[])
     if (n < 0)
          error("ERROR reading from socket");
     //printf("%s\n",buffer);
-    if (strncmp(buffer, "enc", 4) != 0) {
+    if (strncmp(buffer, "enc", 3) != 0) {
         printf("Only use otp_enc with otp_enc_d \n");
         close(sockfd);
         exit(0);

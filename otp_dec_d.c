@@ -108,10 +108,7 @@ void handleIncoming(int connection){
 
 }
 
-/* func: decode
- * takes int for socket, 2 strings for filenames of enciphered text and the key text
- * returns filename for newly created decoded textfile
- */
+
 char* decode(int connection, char *cipherfile, char *keyfile){
     FILE *fp;
     fp = fopen(cipherfile, "r");

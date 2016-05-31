@@ -87,7 +87,7 @@ int main(int argc, char *argv[])
     if (n < 0)
          error("ERROR reading from socket");
     //printf("%s\n",buffer);
-    if (strncmp(buffer, "dec", 4) != 0) {
+    if (strncmp(buffer, "dec", 3) != 0) {
         printf("Only use dec with otp_dec_d \n");
         close(sockfd);
         exit(0);
@@ -108,7 +108,9 @@ int main(int argc, char *argv[])
     int numbytes = 0;
     //loop to print out enciphered text in case it is a big one
     while ((numbytes = recv(sockfd, buffer, 1024, 0)) > 0) {
-        printf("%s", buffer);
+        char printThis[numbytes];
+        snprintf(printThis, numbytes, "%s", buffer);
+        printf("%s", printThis);
         bzero(buffer, 1024);
         //if less than 1024 we are on the last chunk, so break
         if (numbytes < 1024) {
