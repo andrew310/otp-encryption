@@ -73,7 +73,10 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-
+/* function: handleIncoming
+ * takes: int for the current connected socket
+ * sends identification msg, then rcvs contents of two text files, calls decode function
+ */
 void handleIncoming(int connection){
 
     //identify yourself!!
@@ -105,7 +108,10 @@ void handleIncoming(int connection){
 
 }
 
-
+/* func: decode
+ * takes int for socket, 2 strings for filenames of enciphered text and the key text
+ * returns filename for newly created decoded textfile
+ */
 char* decode(int connection, char *cipherfile, char *keyfile){
     FILE *fp;
     fp = fopen(cipherfile, "r");
@@ -166,6 +172,12 @@ char* decode(int connection, char *cipherfile, char *keyfile){
     return tempname;
 }
 
+
+/* func: getFile
+ * rcvs connection socket, string for name of temp file to creat
+ * this function is used twice since it is generic enough
+ * returns name of newly created file containing text
+ */
 char* getFile(int connection, char* name){
     char buffer[1024];
 
@@ -192,6 +204,11 @@ char* getFile(int connection, char* name){
     return tempname;
 }
 
+
+/* func: send_file
+ * rcvs: string for filename, int for socket
+ * opens file and sends its contents over the socket
+ */
 void send_file(char* filename, int connectionFd){
     //printf("opening file: %s\n", filename);
     FILE *fl = fopen(filename, "r");

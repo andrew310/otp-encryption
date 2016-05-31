@@ -105,7 +105,10 @@ void handleIncoming(int connection){
 
 }
 
-
+/* func: encode
+ * takes int for socket, 2 strings for filenames of plain text and the key text
+ * returns filename for newly created encoded textfile
+ */
 char* encode(int connection, char *plainfile, char *cipherfile){
     FILE *fp;
     fp = fopen(plainfile, "r");
@@ -165,6 +168,11 @@ char* encode(int connection, char *plainfile, char *cipherfile){
     return tempname;
 }
 
+/* func: getFile
+ * rcvs connection socket, string for name of temp file to creat
+ * this function is used twice since it is generic enough
+ * returns name of newly created file containing text
+ */
 char* getFile(int connection, char* name){
     char buffer[1024];
 
@@ -191,6 +199,10 @@ char* getFile(int connection, char* name){
     return tempname;
 }
 
+/* func: send_file
+ * rcvs: string for filename, int for socket
+ * opens file and sends its contents over the socket
+ */
 void send_file(char* filename, int connectionFd){
     //printf("opening file: %s\n", filename);
     FILE *fl = fopen(filename, "r");

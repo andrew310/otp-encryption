@@ -119,6 +119,10 @@ int main(int argc, char *argv[])
     return 0;
 }
 
+/* func: send_file
+ * rcvs: string for filename, int for socket
+ * opens file and sends its contents over the socket
+ */
 void send_file(char* filename, int connectionFd){
     //printf("opening file: %s\n", filename);
     FILE *fl = fopen(filename, "r");
